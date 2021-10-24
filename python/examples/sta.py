@@ -2,7 +2,12 @@ import netlink.capi as nl
 import netlink.genl.capi as genl
 import nl80211
 import sys
+from lib.scan import bss_list
+
+from lib.station import station, station_list, station_stats
+from lib.cli import bss_info
 import traceback
+
 
 class test_class:
 	def __init__(self):
@@ -42,6 +47,75 @@ def handle_band(attr, fpol):
 		for fattr in nl.nla_get_nested(battr[nl80211.NL80211_BAND_ATTR_FREQS]):
 			handle_freq(fattr, fpol)
 
+def handle_sta(attr):
+	#fpol = nl.nla_policy_array(nl80211.NL80211_STA_INFO_MAX + 1)
+	#fpol[nl80211.NL80211_STA_INFO_TX_BITRATE].type = nl.NLA_NESTED
+
+	ifidx = nl.if_nametoindex(sys.argv[1])
+	bl = bss_list(ifidx)
+	bss = bl.find_status_bss()
+
+	sl = station_list(ifidx, None)
+
+	#e, battr = nl.py_nla_parse_nested(nl80211.NL80211_STA_INFO_MAX, attr, None)
+	#print(battr)
+	#if nl80211.NL80211_BAND_ATTR_FREQS in battr:
+
+	#print(sl[0].nest_attr_map)
+
+	for sta in sl:
+		print("aaaaaaaaaaaaaaaaaaaaaaa")
+		print(sta.nest_attr_map)
+		#e, fattr = nl.py_nla_parse_nested(nl80211.NL80211_STA_INFO_MAX, attr, pol)
+		#if nl80211.NL80211_FREQUENCY_ATTR_FREQ in fattr:
+		#	freq = nl.nla_get_u32(fattr[nl80211.NL80211_FREQUENCY_ATTR_FREQ])
+
+		if sta and nl80211.NL80211_STA_INFO_TX_BYTES in sta.attrs:
+			print(print('Last seen: %s ms' % (sta._policy[nl80211.NL80211_STA_INFO_SIGNAL].type)))
+
+	#nla_parse_nested(sinfo, NL80211_STA_INFO_MAX,
+		#				 sta._policy[nl80211.NL80211_STA_INFO],
+		#				 stats_policy)
+
+		#e, nattrs = py_nla_parse_nested(len(stats_policy), attrs[nl80211.ATTR_STA_INFO], stats_policy)
+	#	print(sta.attrs[nl80211.NL80211_ATTR_STA_INFO].attrs)
+	#	print(sta.attrs[nl80211.NL80211_STA_INFO_TX_BYTES])
+
+	'''if bss and bss.attrs[nl80211.NL80211_BSS_STATUS] == nl80211.NL80211_BSS_STATUS_ASSOCIATED:
+		s = station(ifidx, bss.attrs[nl80211.NL80211_BSS_BSSID], bl._access)
+		print(s.attrs)
+		sta_info_attrs = s.attrs[nl80211.NL80211_ATTR_STA_INFO]
+		print(((sta_info_attrs[nl80211.NL80211_STA_INFO_SIGNAL])))'''
+	if nl80211.NL80211_ATTR_SSID in attr:
+		print("ssid ", nl.nla_data(attr[nl80211.NL80211_ATTR_SSID]).decode())
+	if nl80211.NL80211_ATTR_MAC in attr:
+		print("mac %02x:%02x:%02x:%02x:%02x:%02x" % tuple(nl.nla_data(attr[nl80211.NL80211_ATTR_MAC])))
+
+	#bssid = bss.attrs[nl80211.NL80211_BSS_BSSID]
+	#bssid_ = 'BSS: %02x' % bssid[0]
+	#print(bssid[0])
+	#for b in bssid[1:6]:
+#		bssid_ += ':%02x' % b
+#	print('BSSID: ', bssid)
+
+	print((attr))
+	print("aa")
+	#print(attr[nl80211.NL80211_ATTR_TX_RATES])
+	#if bss and nl80211.NL80211_BSS_SIGNAL_MBM in bss.attrs:
+	#	print('Signal: %d dBm' % (bss.attrs[nl80211.NL80211_BSS_SIGNAL_MBM] / 100))
+	#	print('Last seen: %d ms' % attr[nl80211.NL80211_ATTR_INACTIVITY_TIMEOUT])
+
+
+def find_ie(ies, eid):
+	while len(ies) > 2 and ies[0] != eid:
+		ies = ies[ies[1]+2:]
+	if len(ies) < 2:
+		return None
+	if len(ies) < 2 + ies[1]:
+		return None
+	return ies[0:2+ies[1]]
+
+
 def cipher_name(suite):
 	suite_val = '%02x%02x%02x%02x' % tuple(reversed(suite))
 	if suite_val == '000fac01':
@@ -66,9 +140,14 @@ def msg_handler(m, a):
 		e, attr = genl.py_genlmsg_parse(nl.nlmsg_hdr(m), 0,
 						nl80211.NL80211_ATTR_MAX, None)
 
-		if nl80211.NL80211_ATTR_WIPHY_NAME in attr:
-			print('wiphy %s' % nl.nla_get_string(attr[nl80211.NL80211_ATTR_WIPHY_NAME]))
-		if nl80211.NL80211_ATTR_WIPHY_BANDS in attr:
+		#nattrs = nl.nla_get_nested(attr[nl80211.NL80211_STA_INFO_TX_PACKETS])
+		#for nattr in nattrs:
+	#		print(nattr)
+	#		#handle_band(nattr, fpol)
+		handle_sta(attr)
+		if nl80211.NL80211_ATTR_WIPHY in attr:
+			print('wiphy %s' % nl.nla_get_u32(attr[nl80211.NL80211_ATTR_WIPHY]))
+		if nl80211.NL80211_ATTR_WIPHY_FREQ in attr:
 			fpol = nl.nla_policy_array(nl80211.NL80211_FREQUENCY_ATTR_MAX + 1)
 			fpol[nl80211.NL80211_FREQUENCY_ATTR_FREQ].type = nl.NLA_U32
 			fpol[nl80211.NL80211_FREQUENCY_ATTR_DISABLED].type = nl.NLA_FLAG
@@ -77,7 +156,7 @@ def msg_handler(m, a):
 			fpol[nl80211.NL80211_FREQUENCY_ATTR_RADAR].type = nl.NLA_FLAG
 			fpol[nl80211.NL80211_FREQUENCY_ATTR_MAX_TX_POWER].type = nl.NLA_U32
 
-			nattrs = nl.nla_get_nested(attr[nl80211.NL80211_ATTR_WIPHY_BANDS])
+			nattrs = nl.nla_get_nested(attr[nl80211.NL80211_ATTR_WIPHY_FREQ])
 			for nattr in nattrs:
 				handle_band(nattr, fpol)
 		if nl80211.NL80211_ATTR_CIPHER_SUITES in attr:
@@ -127,8 +206,10 @@ try:
 	genl.genl_connect(s)
 	family = genl.genl_ctrl_resolve(s, 'nl80211')
 	m = nl.nlmsg_alloc()
-	genl.genlmsg_put(m, 0, 0, family, 0, 0, nl80211.NL80211_CMD_GET_WIPHY, 0)
-	nl.nla_put_u32(m, nl80211.NL80211_ATTR_WIPHY, 0)
+	genl.genlmsg_put(m, 0, 0, family, 0, 0, nl80211.NL80211_CMD_GET_INTERFACE, 0)
+	nl.nla_put_u32(m, nl80211.NL80211_ATTR_IFINDEX, nl.if_nametoindex(sys.argv[1]))
+	#genl.genlmsg_put(m, 0, 0, family, 0, 0, nl80211.NL80211_CMD_GET_WIPHY, 0)
+	#nl.nla_put_u32(m, nl80211.NL80211_ATTR_WIPHY, 0)
 
 	err = nl.nl_send_auto_complete(s, m);
 	if err < 0:

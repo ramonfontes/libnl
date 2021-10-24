@@ -19,7 +19,7 @@ class BRIDGELink(object):
 
     def bridge_assert_ext_info(self):
         if self._has_ext_info == False:
-            print """
+            """
             Please update your kernel to be able to call this method.
             Your current kernel bridge version is too old to support this extention.
             """

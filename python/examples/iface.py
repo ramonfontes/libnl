@@ -50,7 +50,7 @@ def msg_handler(m, a):
 		return nl.NL_SKIP;
 	except Exception as e:
 		(t,v,tb) = sys.exc_info()
-		print v.message
+		print(v.message)
 		traceback.print_tb(tb)
 
 def error_handler(err, a):
@@ -73,12 +73,11 @@ try:
 	nl.py_nl_cb_set(rx_cb, nl.NL_CB_FINISH, nl.NL_CB_CUSTOM, finish_handler, cbd);
 	nl.py_nl_cb_set(rx_cb, nl.NL_CB_ACK, nl.NL_CB_CUSTOM, ack_handler, cbd);
 	nl.py_nl_cb_set(rx_cb, nl.NL_CB_VALID, nl.NL_CB_CUSTOM, msg_handler, cbd);
-
 	genl.genl_connect(s)
 	family = genl.genl_ctrl_resolve(s, 'nl80211')
 	m = nl.nlmsg_alloc()
 	genl.genlmsg_put(m, 0, 0, family, 0, 0, nl80211.NL80211_CMD_GET_INTERFACE, 0)
-	nl.nla_put_u32(m, nl80211.NL80211_ATTR_IFINDEX, nl.if_nametoindex('wlan0'))
+	nl.nla_put_u32(m, nl80211.NL80211_ATTR_IFINDEX, nl.if_nametoindex(sys.argv[1]))
 
 	err = nl.nl_send_auto_complete(s, m);
 	if err < 0:
@@ -89,5 +88,5 @@ try:
 
 except Exception as e:
 	(t, v, tb) = sys.exc_info()
-	print v.message
+	print(v.message)
 	traceback.print_tb(tb)

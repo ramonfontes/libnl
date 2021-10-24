@@ -7,7 +7,7 @@ include = ['@top_builddir@/include', '@top_srcdir@/include']
 library_dirs = ['@top_builddir@/lib/.libs']
 
 netlink_capi = Extension('netlink/_capi',
-                         sources = ['@srcdir@/netlink/capi.i'],
+                         sources = ['netlink/capi.i'],
 			 include_dirs = include,
 			 swig_opts = opts,
 			 library_dirs = library_dirs,
@@ -15,7 +15,7 @@ netlink_capi = Extension('netlink/_capi',
 			)
 
 route_capi = Extension('netlink/route/_capi',
-                         sources = ['@srcdir@/netlink/route/capi.i'],
+                         sources = ['netlink/route/capi.i'],
 			 include_dirs = include,
 			 swig_opts = opts,
 			 library_dirs = library_dirs,
@@ -23,7 +23,7 @@ route_capi = Extension('netlink/route/_capi',
 			)
 
 genl_capi = Extension('netlink/genl/_capi',
-			 sources = ['@srcdir@/netlink/genl/capi.i'],
+			 sources = ['netlink/genl/capi.i'],
 			 include_dirs = include,
 			 swig_opts = opts,
 			 library_dirs = library_dirs,
@@ -40,7 +40,6 @@ setup(name = 'netlink',
       platforms = 'linux2',
       long_description = 'Experimental python bindings for libnl',
       ext_modules = [netlink_capi, route_capi, genl_capi],
-      package_dir = {'': '@srcdir@'},
       packages = ['netlink', 'netlink.genl', 'netlink.route',
 		  'netlink.route.links', 'netlink.route.qdisc'],
      )
